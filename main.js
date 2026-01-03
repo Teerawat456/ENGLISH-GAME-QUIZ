@@ -350,3 +350,43 @@ function stopBossBGM() {
     try { const page = document.getElementById('bgm'); if (page && _wasPageBgmPlaying) { page.play().catch(()=>{}); } _wasPageBgmPlaying = false; } catch (e) {}
   } catch (e) {}
 }
+
+/* ===============================
+   RESET / BACK TO LOBBY
+================================ */
+function resetGame() {
+  try {
+    stopBossBGM();
+  } catch (e) {}
+
+  try {
+    // stop page bgm briefly and reset position, then attempt to play for lobby
+    const page = document.getElementById('bgm');
+    if (page) { try { page.pause(); page.currentTime = 0; } catch (e) {} }
+  } catch (e) {}
+
+  try {
+    if (ui && ui.gameUI) {
+      ui.gameUI.style.display = 'none';
+      ui.gameUI.classList.remove('centered-ui');
+    }
+    // restore lobby display to its original state (use empty string to avoid forcing layout)
+    try { if (ui && ui.lobby) ui.lobby.style.display = ''; } catch (e) {}
+  } catch (e) {}
+
+  // reset runtime state
+  try {
+    playerHP = 0; enemyHP = 0; score = 0; questionPool = [];
+    currentDifficulty = "";
+    updateScore();
+    if (ui && ui.answerButtons) ui.answerButtons.innerHTML = "";
+    if (ui && ui.questionText) ui.questionText.textContent = "Question";
+    if (ui && ui.log) ui.log.textContent = "";
+    if (ui && ui.bossTopBar) ui.bossTopBar.style.display = 'none';
+    // ensure small enemy hp box visible again
+    try { const eb = ui.enemyHPBar && ui.enemyHPBar.closest ? ui.enemyHPBar.closest('.hp-box') : null; if (eb) eb.style.display = ''; } catch (e) {}
+  } catch (e) {}
+
+  // Do NOT autoplay lobby BGM — leave it paused per requirement
+  try { const pageBgm = document.getElementById('bgm'); if (pageBgm) { try { pageBgm.pause(); pageBgm.currentTime = 0; } catch (e) {} } } catch (e) {}
+}
