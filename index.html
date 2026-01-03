@@ -15,9 +15,13 @@ html, body {
   height: 100%;
   background: #000;
   color: #fff;
-  overflow: hidden;
+  overflow-x: hidden; /* prevent horizontal overflow globally */
   font-family: "Segoe UI", system-ui, sans-serif;
 }
+
+/* Use border-box sizing to make widths predictable and avoid overflow */
+html { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: inherit; }
 
 /* ===============================
    BACKGROUND
@@ -374,8 +378,8 @@ canvas#fog {
 }
 
 @media (max-width:600px) {
-  /* allow page scrolling on small devices and respect safe-area */
-  html, body { overflow: auto; -webkit-overflow-scrolling: touch; padding-bottom: env(safe-area-inset-bottom); }
+  /* allow vertical scrolling on small devices and respect safe-area; keep horizontal locked */
+  html, body { overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: env(safe-area-inset-bottom); }
   canvas#fog, .scanlines { display: none; }
   .eclipse { width:160px; height:160px; }
   .vignette { opacity:0.92; }
@@ -407,6 +411,13 @@ canvas#fog {
   .lobby-grid { flex-direction:column; align-items:stretch; padding:12px; }
   .mode-card { min-width:unset; width:100%; }
   #boss-mode-btn { width:100%; font-size:1.05rem; padding:12px 14px; }
+
+  /* ensure battle container wraps instead of forcing horizontal scroll */
+  #battle-container { flex-wrap: wrap; gap:10px; }
+  .character img { max-width:100%; height:auto; display:block; }
+
+  /* ensure cards never exceed viewport width */
+  .card { max-width: 100%; overflow: hidden; }
 
   /* reduce or hide decorative characters on very small screens */
   @media (max-width:420px) {
