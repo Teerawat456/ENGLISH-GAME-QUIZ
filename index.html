@@ -351,41 +351,57 @@ canvas#fog {
   .card-title { font-size:1.2em; }
   #game-ui { max-width:96vw; padding:16px; }
   .lobby-grid { gap:14px; }
+  .hp-box { min-width:120px; }
 }
 
 @media (max-width:600px) {
-  html, body { overflow: auto; -webkit-overflow-scrolling: touch; }
-  canvas#fog { display: none; }
-  .scanlines { display: none; }
-  .eclipse { width:180px; height:180px; }
-  .vignette { opacity:0.9; }
+  /* allow page scrolling on small devices and respect safe-area */
+  html, body { overflow: auto; -webkit-overflow-scrolling: touch; padding-bottom: env(safe-area-inset-bottom); }
+  canvas#fog, .scanlines { display: none; }
+  .eclipse { width:160px; height:160px; }
+  .vignette { opacity:0.92; }
 
-  /* make the game UI flow naturally on small screens instead of fixed-centered overlay */
+  /* transform centered UI into a natural flow card so it doesn't block the viewport */
   #game-ui.centered-ui {
     position: relative !important;
     left: auto !important;
     top: auto !important;
     transform: none !important;
     width: 96vw !important;
-    margin: 12px auto !important;
+    margin: 14px auto !important;
     padding: 14px !important;
     border-radius: 12px !important;
   }
 
+  /* stack top-bar elements vertically for narrow widths */
+  .top-bar { flex-direction: column; align-items: stretch; gap:12px; }
+  .top-bar .hp-box, .top-bar .score-box { width:100%; }
+
   #game-ui { padding:12px; }
   #question-text { font-size:1rem; }
-  #answerButtons, #choices { display:flex; flex-direction:column; gap:10px; }
-  #answerButtons button, .choice-btn, .btn { width:100%; min-height:48px; font-size:1rem; border-radius:10px; }
 
-  /* make lobby cards stack vertically and stretch */
+  /* answers: column, full width, large touch targets */
+  #answerButtons, #choices { display:flex; flex-direction:column; gap:12px; }
+  #answerButtons button, .choice-btn, .btn { width:100%; min-height:52px; font-size:1.04rem; border-radius:12px; padding:12px 14px; }
+
+  /* lobby: stack cards and make primary actions prominent */
   .lobby-grid { flex-direction:column; align-items:stretch; padding:12px; }
   .mode-card { min-width:unset; width:100%; }
+  #boss-mode-btn { width:100%; font-size:1.05rem; padding:12px 14px; }
 
-  /* ensure character images scale */
-  .character img { width:72px; height:72px; }
+  /* reduce or hide decorative characters on very small screens */
+  @media (max-width:420px) {
+    .character img { display:none; }
+    .eclipse { width:140px; height:140px; }
+    #question-text { font-size:0.95rem; }
+    #answerButtons button, .choice-btn, .btn { min-height:56px; font-size:1rem; }
+  }
 
   /* boss top bar should not cover content on small screens */
   #boss-top-bar { top:8px; left:50%; transform:translateX(-50%); }
+
+  /* make action buttons sticky at bottom on narrow screens (if visible) */
+  #action-buttons { position: sticky; bottom: 8px; left: 0; display:flex; gap:8px; justify-content:center; padding:6px 12px; background:transparent; }
 }
 
 </style>
