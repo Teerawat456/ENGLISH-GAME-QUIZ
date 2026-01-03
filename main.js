@@ -54,17 +54,33 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e.target && e.target.closest && e.target.closest('#difficulty-select')) return;
       const ds = document.getElementById('difficulty-select');
       if (!ds) return;
-      ds.style.display = ds.style.display === 'flex' ? 'none' : 'flex';
+      const next = ds.style.display === 'flex' ? 'none' : 'flex';
+      ds.style.display = next;
+      try { localStorage.setItem('difficultyOpen', next === 'flex' ? '1' : '0'); } catch (e) {}
     };
+    // keyboard (enter/space) to toggle
+    origPanel.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); origPanel.click(); } });
   }
 
   // Boss mode
   if (ui.bossBtn) ui.bossBtn.onclick = startBossMode;
+  // keyboard for boss card
+  const bossPanel = document.getElementById('boss-panel');
+  if (bossPanel) bossPanel.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); ui.bossBtn && ui.bossBtn.click(); } });
   // Back to lobby button (menu)
   try {
     const back = document.getElementById('back-lobby-btn');
     if (back) {
       back.addEventListener('click', (ev) => { ev.preventDefault(); try { resetGame(); } catch (e) {} });
+    }
+  } catch (e) {}
+
+  // restore difficulty panel open state if user left it open
+  try {
+    const ds = document.getElementById('difficulty-select');
+    if (ds) {
+      const was = localStorage.getItem('difficultyOpen');
+      if (was === '1') ds.style.display = 'flex';
     }
   } catch (e) {}
 });
@@ -130,8 +146,8 @@ function startBossMode() {
 function startGame(pool) {
   score = 0;
   questionPool = [...pool];
-  ui.lobby.style.display = "none";
-  ui.gameUI.style.display = "block";
+  // animate transition to game UI
+  try { showGameUI(); } catch (e) { ui.lobby.style.display = "none"; ui.gameUI.style.display = "block"; }
 
   // If boss mode, start boss BGM; else ensure boss BGM stopped and page BGM plays
   try {
@@ -169,6 +185,29 @@ function startGame(pool) {
   ui.log.textContent = "";
 
   askQuestion();
+}
+
+/* ===============================
+   UI TRANSITIONS
+================================ */
+function showGameUI() {
+  const dur = 260;
+  try {
+    if (ui.lobby) { ui.lobby.classList.add('fade'); ui.lobby.classList.remove('fade-in'); ui.lobby.classList.add('fade-out'); }
+    setTimeout(() => {
+      try { if (ui.lobby) ui.lobby.style.display = 'none'; if (ui.gameUI) { ui.gameUI.style.display = 'block'; ui.gameUI.classList.add('fade','fade-in'); ui.gameUI.classList.remove('fade-out'); ui.gameUI.scrollIntoView({behavior:'auto'}); } } catch (e) {}
+    }, dur);
+  } catch (e) {}
+}
+
+function showLobbyUI() {
+  const dur = 240;
+  try {
+    if (ui.gameUI) { ui.gameUI.classList.add('fade'); ui.gameUI.classList.remove('fade-in'); ui.gameUI.classList.add('fade-out'); }
+    setTimeout(() => {
+      try { if (ui.gameUI) ui.gameUI.style.display = 'none'; if (ui.lobby) { ui.lobby.style.display = ''; ui.lobby.classList.add('fade','fade-in'); ui.lobby.classList.remove('fade-out'); ui.lobby.scrollIntoView({behavior:'auto'}); } } catch (e) {}
+    }, dur);
+  } catch (e) {}
 }
 
 /* ===============================
@@ -366,12 +405,9 @@ function resetGame() {
   } catch (e) {}
 
   try {
-    if (ui && ui.gameUI) {
-      ui.gameUI.style.display = 'none';
-      ui.gameUI.classList.remove('centered-ui');
-    }
-    // restore lobby display to its original state (use empty string to avoid forcing layout)
-    try { if (ui && ui.lobby) ui.lobby.style.display = ''; } catch (e) {}
+    // animate back to lobby
+    try { if (ui && ui.gameUI) ui.gameUI.classList.remove('centered-ui'); } catch (e) {}
+    try { showLobbyUI(); } catch (e) { if (ui && ui.gameUI) { ui.gameUI.style.display = 'none'; } if (ui && ui.lobby) ui.lobby.style.display = ''; }
   } catch (e) {}
 
   // reset runtime state

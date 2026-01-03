@@ -196,6 +196,25 @@ canvas#fog {
   margin-bottom: 14px;
 }
 
+/* Accessibility & polished focus */
+:root{
+  --ui-transition: 240ms;
+  --accent: #ff5252;
+  --accent-2: #ffe082;
+}
+.btn:focus, .choice-btn:focus, .mode-card:focus { outline: none; box-shadow: 0 0 0 4px rgba(255,82,82,0.12); border-color: rgba(255,82,82,0.16); }
+.btn:focus-visible, .choice-btn:focus-visible { box-shadow: 0 0 0 6px rgba(255,82,82,0.14); }
+
+/* Page transitions */
+.fade { transition: opacity var(--ui-transition) ease, transform var(--ui-transition) ease; }
+.fade-in { opacity: 1; transform: none; pointer-events: auto; }
+.fade-out { opacity: 0; transform: translateY(6px); pointer-events: none; }
+
+/* Reduced motion respect */
+@media (prefers-reduced-motion: reduce) {
+  .fade, .eclipse::before { transition: none !important; animation: none !important; }
+}
+
 #choices {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
@@ -471,7 +490,7 @@ canvas#fog {
     </div>
 
     <div id="question-area">
-      <div id="question-text">Question</div>
+        <div id="question-text" role="status" aria-live="polite" aria-atomic="true">Question</div>
         <div id="answerButtons" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;"></div>
       </div>
       <div id="battle-container" style="margin-top:12px; display:flex; gap:12px; align-items:center;">
@@ -493,7 +512,7 @@ canvas#fog {
 =============================== -->
 <div id="lobby-wrap">
   <div class="lobby-grid">
-    <div id="original-panel" class="card mode-card">
+    <div id="original-panel" class="card mode-card" role="button" tabindex="0" aria-label="Original Mode - เปิดเมนูเลือกความยาก">
       <div class="card-title">🎮 English Battle</div>
       <div style="margin:8px 0;">Original Mode</div>
       <div id="difficulty-select" style="display:none;gap:12px;margin-top:14px;">
@@ -504,7 +523,7 @@ canvas#fog {
       </div>
     </div>
 
-    <div id="boss-panel" class="card mode-card">
+    <div id="boss-panel" class="card mode-card" role="button" tabindex="0" aria-label="Boss Mode - เริ่มการต่อสู้บอส">
       <div class="card-title">🔥 Boss Mode</div>
       <div style="margin:10px 0;">Boss HP 37,000</div>
       <button id="boss-mode-btn" class="btn btn-main">เริ่ม Boss Fight</button>
