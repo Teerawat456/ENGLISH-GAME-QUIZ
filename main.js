@@ -2,6 +2,7 @@
    GLOBAL STATE
 ================================ */
 let playerHP, playerATK;
+let playerMaxHP;
 let enemyHP, enemyATK;
 let score = 0;
 let questionPool = [];
@@ -11,6 +12,9 @@ let currentDifficulty = "";
 let bossBGM = [];
 let _bossBGMIndex = -1;
 let _wasPageBgmPlaying = false;
+// Boss rage state
+let bossRage = false;
+let _bossRageTimer = null;
 
 /* ===============================
    UI ELEMENTS
@@ -92,22 +96,22 @@ function startOriginalMode(diff) {
   let pool;
 
   if (diff === "Easy") {
-    playerHP = 150; playerATK = 18;
+    playerMaxHP = 150; playerHP = playerMaxHP; playerATK = 18;
     enemyHP = 100; enemyATK = 10;
     pool = easyQuestions;
   }
   else if (diff === "Normal") {
-    playerHP = 150; playerATK = 15;
+    playerMaxHP = 150; playerHP = playerMaxHP; playerATK = 15;
     enemyHP = 120; enemyATK = 20;
     pool = normalQuestions;
   }
   else if (diff === "Hard") {
-    playerHP = 150; playerATK = 12;
+    playerMaxHP = 150; playerHP = playerMaxHP; playerATK = 12;
     enemyHP = 150; enemyATK = 28;
     pool = hardQuestions;
   }
   else if (diff === "Lunatic") {
-    playerHP = 150; playerATK = 10;
+    playerMaxHP = 150; playerHP = playerMaxHP; playerATK = 10;
     enemyHP = 180; enemyATK = 50;
     pool = lunaticQuestions;
   }
@@ -125,10 +129,16 @@ function startOriginalMode(diff) {
    START BOSS MODE
 ================================ */
 function startBossMode() {
-  playerHP = 300;
-  playerATK = 125;
+  playerMaxHP = 300;
+  playerHP = playerMaxHP;
+  playerATK = 500;
   enemyHP = 37000;
   enemyATK = 125;
+
+  // reset boss rage state when starting boss mode
+  bossRage = false;
+  if (_bossRageTimer) { clearTimeout(_bossRageTimer); _bossRageTimer = null; }
+  try { if (ui && ui.combatStatus) ui.combatStatus.style.display = 'none'; if (ui && ui.bossTopBar) ui.bossTopBar.classList.remove('rage'); } catch(e) {}
 
   currentDifficulty = "Boss";
 
@@ -160,7 +170,15 @@ function startGame(pool) {
       }
       ensureBossBGM();
       playBossPhase(0);
-      try { if (ui.bossTopBar) { ui.bossTopBar.style.display = 'block'; ui.bossTopBar.dataset.max = enemyHP; } } catch (e) {}
+      try {
+        if (ui.bossTopBar) {
+          ui.bossTopBar.style.display = 'block';
+          ui.bossTopBar.dataset.max = enemyHP;
+          try { ui.bossTopBar.dataset.phase = 0; } catch(e) {}
+          // create visual phase ticks for boss top bar
+          try { createBossPhaseTicks(parseInt(enemyHP) || 37000); } catch(e) {}
+        }
+      } catch (e) {}
       // hide small enemy HP box during boss mode
       try { const eb = ui.enemyHPBar && ui.enemyHPBar.closest ? ui.enemyHPBar.closest('.hp-box') : null; if (eb) eb.style.display = 'none'; } catch (e) {}
     } else {
@@ -175,7 +193,7 @@ function startGame(pool) {
   // center the game UI with the nightmare style
   try { ui.gameUI.classList.add('centered-ui'); } catch (e) {}
 
-  ui.playerHPBar.dataset.max = playerHP;
+  ui.playerHPBar.dataset.max = playerMaxHP;
   ui.enemyHPBar.dataset.max = enemyHP;
 
   // combat-status HUD intentionally left hidden to avoid duplicate HP displays
@@ -248,15 +266,40 @@ function checkAnswer(choice, correct) {
   if (choice === correct) {
     enemyHP -= playerATK;
     score += scoreByDifficulty();
-    ui.log.textContent = `✅ ถูกต้อง! โจมตี ${playerATK}`;
+    // Restore 15% of max HP on correct answer
+    try {
+      const heal = Math.round((playerMaxHP || 0) * 0.15);
+      playerHP = Math.min((playerHP || 0) + heal, playerMaxHP || playerHP || 0);
+      ui.log.textContent = `✅ ถูกต้อง! โจมตี ${playerATK} • ฟื้นฟู HP +${heal}`;
+    } catch (e) {
+      ui.log.textContent = `✅ ถูกต้อง! โจมตี ${playerATK}`;
+    }
   } else {
-    playerHP -= enemyATK;
-    ui.log.textContent = `❌ ผิด! โดนโจมตี ${enemyATK}`;
+    // Wrong answer handling
+    if (currentDifficulty === 'Boss') {
+      // If boss is already enraged -> instant death
+      if (bossRage) {
+        playerHP = 0;
+        ui.log.textContent = `❌ ผิด! ตายทันที!`;
+        try { if (ui && ui.combatStatus) { ui.combatStatus.style.display = 'block'; ui.combatStatus.textContent = 'BOSS RAGE! ตอบผิด = ตายทันที!'; } if (ui && ui.bossTopBar) ui.bossTopBar.classList.add('rage'); } catch(e) {}
+      } else {
+        // normal damage (no heal)
+        playerHP -= enemyATK;
+        ui.log.textContent = `❌ ผิด! โดนโจมตี ${enemyATK}`;
+      }
+    } else {
+      // non-boss modes: normal damage
+      playerHP -= enemyATK;
+      ui.log.textContent = `❌ ผิด! โดนโจมตี ${enemyATK}`;
+    }
   }
 
   clampHP();
   updateHP();
   updateScore();
+
+  // Boss may enter Rage on its turn (random 15%) — attempt after resolving this turn
+  try { if (currentDifficulty === 'Boss' && enemyHP > 0 && playerHP > 0) attemptBossRage(); } catch(e) {}
 
   if (playerHP <= 0 || enemyHP <= 0) {
     endGame();
@@ -305,6 +348,10 @@ function updateHP() {
           }
           const topPhase = document.getElementById('boss-phase-top');
           if (topPhase) topPhase.textContent = `${idx+1}/4`;
+          // expose current phase index on boss top bar for segmented UI
+          try { if (ui && ui.bossTopBar) ui.bossTopBar.dataset.phase = idx; } catch(e) {}
+          // update phase ticks visual state
+          try { const maxVal = parseInt(ui.bossTopBar && ui.bossTopBar.dataset && ui.bossTopBar.dataset.max) || eMax; updateBossPhaseTicks(enemyHP, maxVal); } catch(e) {}
           // boss-player-hp element removed from DOM; single player HP shown in player-hp-bar
         } catch (e) {}
       }
@@ -316,6 +363,25 @@ function updateScore() {
   ui.scoreText.textContent = score;
 }
 
+// Attempt to enter boss rage on boss turn (15% chance). Only when not already enraged.
+function attemptBossRage() {
+  try {
+    if (currentDifficulty !== 'Boss' || bossRage) return;
+    if (enemyHP <= 0) return;
+    const roll = Math.random();
+    if (roll < 0.15) {
+      bossRage = true;
+      try {
+        if (ui && ui.combatStatus) { ui.combatStatus.style.display = 'block'; ui.combatStatus.textContent = 'BOSS RAGE! ตอบผิด = ตายทันที!'; }
+        if (ui && ui.bossTopBar) ui.bossTopBar.classList.add('rage');
+      } catch (e) {}
+      _bossRageTimer = setTimeout(() => {
+        try { bossRage = false; _bossRageTimer = null; if (ui && ui.combatStatus) ui.combatStatus.style.display = 'none'; if (ui && ui.bossTopBar) ui.bossTopBar.classList.remove('rage'); } catch(e) {}
+      }, 10000);
+    }
+  } catch (e) {}
+}
+
 function disableChoices() {
   document.querySelectorAll("#answerButtons button")
     .forEach(b => b.disabled = true);
@@ -324,6 +390,41 @@ function disableChoices() {
 function clampHP() {
   playerHP = Math.max(0, playerHP);
   enemyHP = Math.max(0, enemyHP);
+}
+
+// Create phase tick markers inside the boss top bar.
+// thresholdsPercent is array of percentages (from left) where next phase starts (e.g. 75,50,25).
+function createBossPhaseTicks(maxHP) {
+  try {
+    if (!ui || !ui.bossTopBar) return;
+    const container = ui.bossTopBar.querySelector('.phase-ticks');
+    if (!container) return;
+    container.innerHTML = '';
+    // Next-phase thresholds: when HP falls to 75%,50%,25% the boss advances phases
+    const thresholds = [75,50,25];
+    thresholds.forEach(pct => {
+      const t = document.createElement('div');
+      t.className = 'tick';
+      t.dataset.threshold = pct; // percent remaining
+      t.style.left = pct + '%';
+      container.appendChild(t);
+    });
+  } catch (e) {}
+}
+
+function updateBossPhaseTicks(currentHP, maxHP) {
+  try {
+    if (!ui || !ui.bossTopBar) return;
+    const container = ui.bossTopBar.querySelector('.phase-ticks');
+    if (!container) return;
+    const ticks = Array.from(container.querySelectorAll('.tick'));
+    ticks.forEach(t => {
+      const pct = parseFloat(t.dataset.threshold) || 0;
+      const thresholdVal = Math.round((pct/100) * maxHP);
+      // mark passed when enemy HP is <= thresholdVal
+      if (currentHP <= thresholdVal) t.classList.add('passed'); else t.classList.remove('passed');
+    });
+  } catch (e) {}
 }
 
 function scoreByDifficulty() {
@@ -414,6 +515,9 @@ function resetGame() {
   try {
     playerHP = 0; enemyHP = 0; score = 0; questionPool = [];
     currentDifficulty = "";
+    bossRage = false;
+    if (_bossRageTimer) { clearTimeout(_bossRageTimer); _bossRageTimer = null; }
+    try { if (ui && ui.combatStatus) ui.combatStatus.style.display = 'none'; if (ui && ui.bossTopBar) ui.bossTopBar.classList.remove('rage'); } catch(e) {}
     updateScore();
     if (ui && ui.answerButtons) ui.answerButtons.innerHTML = "";
     if (ui && ui.questionText) ui.questionText.textContent = "Question";
