@@ -129,16 +129,16 @@ function startOriginalMode(diff) {
    START BOSS MODE
 ================================ */
 function startBossMode() {
-  playerMaxHP = 300;
+  playerMaxHP = 500;
   playerHP = playerMaxHP;
-  playerATK = 500;
+  playerATK = 650;
   enemyHP = 37000;
   enemyATK = 125;
 
   // reset boss rage state when starting boss mode
   bossRage = false;
   if (_bossRageTimer) { clearTimeout(_bossRageTimer); _bossRageTimer = null; }
-  try { if (ui && ui.combatStatus) ui.combatStatus.style.display = 'none'; if (ui && ui.bossTopBar) ui.bossTopBar.classList.remove('rage'); } catch(e) {}
+  try { if (ui && ui.bossTopBar) ui.bossTopBar.classList.remove('rage'); } catch(e) {}
 
   currentDifficulty = "Boss";
 
@@ -146,7 +146,6 @@ function startBossMode() {
     alert("❌ lunaticQuestions ไม่ถูกโหลด");
     return;
   }
-
   startGame(lunaticQuestions);
 }
 
@@ -281,7 +280,7 @@ function checkAnswer(choice, correct) {
       if (bossRage) {
         playerHP = 0;
         ui.log.textContent = `❌ ผิด! ตายทันที!`;
-        try { if (ui && ui.combatStatus) { ui.combatStatus.style.display = 'block'; ui.combatStatus.textContent = 'BOSS RAGE! ตอบผิด = ตายทันที!'; } if (ui && ui.bossTopBar) ui.bossTopBar.classList.add('rage'); } catch(e) {}
+        try { if (ui && ui.bossTopBar) ui.bossTopBar.classList.add('rage'); } catch(e) {}
       } else {
         // normal damage (no heal)
         playerHP -= enemyATK;
@@ -344,7 +343,8 @@ function updateHP() {
             const maxVal = parseInt(ui.bossTopBar.dataset.max) || eMax;
             const pct = Math.max(0, Math.min(100, Math.round((enemyHP / maxVal) * 100)));
             ui.bossTopFill.style.width = pct + "%";
-            ui.bossTopText.textContent = `${enemyHP} / ${maxVal} (${pct}%)`;
+            // show HP and, if boss is enraged, show the rage message inline
+            ui.bossTopText.textContent = `${enemyHP} / ${maxVal} (${pct}%)` + (bossRage ? ' — BOSS RAGE! ตอบผิด = ตายทันที!' : '');
           }
           const topPhase = document.getElementById('boss-phase-top');
           if (topPhase) topPhase.textContent = `${idx+1}/4`;
@@ -372,11 +372,10 @@ function attemptBossRage() {
     if (roll < 0.15) {
       bossRage = true;
       try {
-        if (ui && ui.combatStatus) { ui.combatStatus.style.display = 'block'; ui.combatStatus.textContent = 'BOSS RAGE! ตอบผิด = ตายทันที!'; }
         if (ui && ui.bossTopBar) ui.bossTopBar.classList.add('rage');
       } catch (e) {}
       _bossRageTimer = setTimeout(() => {
-        try { bossRage = false; _bossRageTimer = null; if (ui && ui.combatStatus) ui.combatStatus.style.display = 'none'; if (ui && ui.bossTopBar) ui.bossTopBar.classList.remove('rage'); } catch(e) {}
+        try { bossRage = false; _bossRageTimer = null; if (ui && ui.bossTopBar) ui.bossTopBar.classList.remove('rage'); } catch(e) {}
       }, 10000);
     }
   } catch (e) {}
@@ -517,7 +516,7 @@ function resetGame() {
     currentDifficulty = "";
     bossRage = false;
     if (_bossRageTimer) { clearTimeout(_bossRageTimer); _bossRageTimer = null; }
-    try { if (ui && ui.combatStatus) ui.combatStatus.style.display = 'none'; if (ui && ui.bossTopBar) ui.bossTopBar.classList.remove('rage'); } catch(e) {}
+    try { if (ui && ui.bossTopBar) ui.bossTopBar.classList.remove('rage'); } catch(e) {}
     updateScore();
     if (ui && ui.answerButtons) ui.answerButtons.innerHTML = "";
     if (ui && ui.questionText) ui.questionText.textContent = "Question";
