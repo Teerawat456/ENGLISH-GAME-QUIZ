@@ -5,6 +5,7 @@ let playerHP, playerATK;
 let playerMaxHP;
 let enemyHP, enemyATK;
 let score = 0;
+let highScores = [];
 let questionPool = [];
 let currentDifficulty = "";
 
@@ -41,6 +42,13 @@ document.addEventListener("DOMContentLoaded", () => {
   ui.bossBtn = document.getElementById('boss-mode-btn');
 
   if (ui.gameUI) ui.gameUI.style.display = "none";
+
+  // Load high scores from localStorage
+  try {
+    const saved = localStorage.getItem('highScores');
+    if (saved) highScores = JSON.parse(saved) || [];
+    updateHighScoreDisplay();
+  } catch (e) {}
 
   // Original mode buttons
   document.querySelectorAll("#difficulty-select button").forEach(btn => {
@@ -313,6 +321,27 @@ function checkAnswer(choice, correct) {
 function endGame() {
   if (ui.answerButtons) ui.answerButtons.innerHTML = "";
   if (ui.questionText) ui.questionText.textContent = playerHP > 0 ? "🎉 YOU WIN!" : "💀 GAME OVER";
+
+  // Prompt for name and save high score
+  setTimeout(() => {
+    const name = prompt("Enter your name for the high score:", "Player");
+    if (name && name.trim()) {
+      const entry = {
+        score: score,
+        mode: currentDifficulty === 'Boss' ? 'Boss' : 'Original',
+        difficulty: currentDifficulty === 'Boss' ? 'Boss' : currentDifficulty,
+        name: name.trim(),
+        date: new Date().toISOString()
+      };
+      highScores.push(entry);
+      // Keep only top 10
+      highScores = highScores.sort((a, b) => b.score - a.score).slice(0, 10);
+      try {
+        localStorage.setItem('highScores', JSON.stringify(highScores));
+        updateHighScoreDisplay();
+      } catch (e) {}
+    }
+  }, 1000); // Delay to show game over message first
 }
 
 /* ===============================
@@ -361,6 +390,30 @@ function updateHP() {
 
 function updateScore() {
   ui.scoreText.textContent = score;
+}
+
+function updateHighScoreDisplay() {
+  // Update top score
+  const topScore = highScores.length > 0 ? Math.max(...highScores.map(h => h.score)) : 0;
+  const elem = document.getElementById('high-score-value');
+  if (elem) elem.textContent = topScore;
+
+  // Update list
+  const listElem = document.getElementById('high-score-list');
+  if (listElem) {
+    if (highScores.length === 0) {
+      listElem.innerHTML = '';
+      return;
+    }
+    // Sort by score descending
+    const sorted = [...highScores].sort((a, b) => b.score - a.score);
+    let html = '<div style="margin-bottom:5px;">Recent Scores:</div>';
+    sorted.slice(0, 5).forEach(h => {
+      const mode = h.mode === 'Boss' ? 'Boss' : `Original (${h.difficulty})`;
+      html += `<div>${h.score} pts - ${h.name} (${mode})</div>`;
+    });
+    listElem.innerHTML = html;
+  }
 }
 
 // Attempt to enter boss rage on boss turn (15% chance). Only when not already enraged.
