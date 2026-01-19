@@ -40,6 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
   ui.scoreText = document.getElementById('score');
   ui.log = document.getElementById('log');
   ui.bossBtn = document.getElementById('boss-mode-btn');
+  ui.highScorePage = document.getElementById('high-score-page');
+  ui.backToLobbyBtn = document.getElementById('back-to-lobby-btn');
+  ui.viewHighScoresBtn = document.getElementById('view-high-scores-btn');
 
   if (ui.gameUI) ui.gameUI.style.display = "none";
 
@@ -95,6 +98,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (was === '1') ds.style.display = 'flex';
     }
   } catch (e) {}
+
+  // High score page buttons
+  if (ui.viewHighScoresBtn) ui.viewHighScoresBtn.onclick = showHighScorePage;
+  if (ui.backToLobbyBtn) ui.backToLobbyBtn.onclick = showLobbyUI;
 });
 
 /* ===============================
@@ -414,6 +421,48 @@ function updateHighScoreDisplay() {
     });
     listElem.innerHTML = html;
   }
+
+  // Update full list (separated by mode)
+  const originalElem = document.getElementById('original-high-scores');
+  const bossElem = document.getElementById('boss-high-scores');
+  if (originalElem && bossElem) {
+    const originalScores = highScores.filter(h => h.mode === 'Original').sort((a, b) => b.score - a.score);
+    const bossScores = highScores.filter(h => h.mode === 'Boss').sort((a, b) => b.score - a.score);
+
+    const renderList = (scores, elem) => {
+      if (scores.length === 0) {
+        elem.innerHTML = '<div style="color:#aaa;">ยังไม่มี high score</div>';
+        return;
+      }
+      let html = '';
+      scores.forEach((h, index) => {
+        const date = new Date(h.date).toLocaleDateString();
+        html += `<div style="padding:10px; background:rgba(255,255,255,0.1); border-radius:5px;">
+          <div style="font-weight:bold;">#${index+1} - ${h.score} pts</div>
+          <div>${h.name} • ${h.difficulty} • ${date}</div>
+        </div>`;
+      });
+      elem.innerHTML = html;
+    };
+
+    renderList(originalScores, originalElem);
+    renderList(bossScores, bossElem);
+  }
+}
+
+/* ===============================
+   UI HELPERS
+================================ */
+function showHighScorePage() {
+  if (ui.lobby) ui.lobby.style.display = 'none';
+  if (ui.gameUI) ui.gameUI.style.display = 'none';
+  if (ui.highScorePage) ui.highScorePage.style.display = 'block';
+}
+
+function showLobbyUI() {
+  if (ui.highScorePage) ui.highScorePage.style.display = 'none';
+  if (ui.gameUI) ui.gameUI.style.display = 'none';
+  if (ui.lobby) ui.lobby.style.display = '';
 }
 
 // Attempt to enter boss rage on boss turn (15% chance). Only when not already enraged.
