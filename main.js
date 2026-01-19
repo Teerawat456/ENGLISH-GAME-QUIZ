@@ -43,6 +43,14 @@ document.addEventListener("DOMContentLoaded", () => {
   ui.highScorePage = document.getElementById('high-score-page');
   ui.backToLobbyBtn = document.getElementById('back-to-lobby-btn');
   ui.viewHighScoresBtn = document.getElementById('view-high-scores-btn');
+  ui.hsModeSelect = document.getElementById('hs-mode-select');
+  ui.hsDifficultySelect = document.getElementById('hs-difficulty-select');
+  ui.hsList = document.getElementById('hs-list');
+  ui.hsOriginalBtn = document.getElementById('hs-original-btn');
+  ui.hsBossBtn = document.getElementById('hs-boss-btn');
+  ui.hsBackToMode = document.getElementById('hs-back-to-mode');
+  ui.hsBackToDiff = document.getElementById('hs-back-to-diff');
+  ui.hsBackToModeFromList = document.getElementById('hs-back-to-mode-from-list');
 
   if (ui.gameUI) ui.gameUI.style.display = "none";
 
@@ -102,6 +110,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // High score page buttons
   if (ui.viewHighScoresBtn) ui.viewHighScoresBtn.onclick = showHighScorePage;
   if (ui.backToLobbyBtn) ui.backToLobbyBtn.onclick = showLobbyUI;
+  if (ui.hsOriginalBtn) ui.hsOriginalBtn.onclick = () => showHSDifficultySelect();
+  if (ui.hsBossBtn) ui.hsBossBtn.onclick = () => showHSList('Boss', 'Boss');
+  if (ui.hsBackToMode) ui.hsBackToMode.onclick = showHSModeSelect;
+  if (ui.hsBackToDiff) ui.hsBackToDiff.onclick = showHSDifficultySelect;
+  if (ui.hsBackToModeFromList) ui.hsBackToModeFromList.onclick = showHSModeSelect;
+  document.querySelectorAll('.hs-diff-btn').forEach(btn => {
+    btn.onclick = () => showHSList('Original', btn.dataset.diff);
+  });
 });
 
 /* ===============================
@@ -457,12 +473,49 @@ function showHighScorePage() {
   if (ui.lobby) ui.lobby.style.display = 'none';
   if (ui.gameUI) ui.gameUI.style.display = 'none';
   if (ui.highScorePage) ui.highScorePage.style.display = 'block';
+  showHSModeSelect();
 }
 
-function showLobbyUI() {
-  if (ui.highScorePage) ui.highScorePage.style.display = 'none';
-  if (ui.gameUI) ui.gameUI.style.display = 'none';
-  if (ui.lobby) ui.lobby.style.display = '';
+function showHSModeSelect() {
+  if (ui.hsModeSelect) ui.hsModeSelect.style.display = 'block';
+  if (ui.hsDifficultySelect) ui.hsDifficultySelect.style.display = 'none';
+  if (ui.hsList) ui.hsList.style.display = 'none';
+}
+
+function showHSDifficultySelect() {
+  if (ui.hsModeSelect) ui.hsModeSelect.style.display = 'none';
+  if (ui.hsDifficultySelect) ui.hsDifficultySelect.style.display = 'block';
+  if (ui.hsList) ui.hsList.style.display = 'none';
+}
+
+function showHSList(mode, difficulty) {
+  if (ui.hsModeSelect) ui.hsModeSelect.style.display = 'none';
+  if (ui.hsDifficultySelect) ui.hsDifficultySelect.style.display = 'none';
+  if (ui.hsList) ui.hsList.style.display = 'block';
+  
+  const title = mode === 'Boss' ? 'Boss Mode' : `Original Mode - ${difficulty}`;
+  if (document.getElementById('hs-list-title')) document.getElementById('hs-list-title').textContent = title;
+  
+  const scores = highScores.filter(h => h.mode === mode && (mode === 'Boss' || h.difficulty === difficulty)).sort((a, b) => b.score - a.score);
+  const elem = document.getElementById('hs-scores');
+  if (elem) {
+    if (scores.length === 0) {
+      elem.innerHTML = '<div style="color:#aaa;">ยังไม่มี high score สำหรับโหมดนี้</div>';
+      return;
+    }
+    let html = '';
+    scores.forEach((h, index) => {
+      const date = new Date(h.date).toLocaleDateString();
+      html += `<div style="padding:10px; background:rgba(255,255,255,0.1); border-radius:5px;">
+        <div style="font-weight:bold;">#${index+1} - ${h.score} pts</div>
+        <div>${h.name} • ${date}</div>
+      </div>`;
+    });
+    elem.innerHTML = html;
+  }
+  
+  // Show back button based on mode
+  if (ui.hsBackToDiff) ui.hsBackToDiff.style.display = mode === 'Original' ? 'inline-block' : 'none';
 }
 
 // Attempt to enter boss rage on boss turn (15% chance). Only when not already enraged.

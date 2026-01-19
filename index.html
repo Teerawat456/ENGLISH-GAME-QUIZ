@@ -471,19 +471,35 @@ canvas#fog {
      HIGH SCORE PAGE
 =============================== -->
 <div id="high-score-page" style="display:none;">
-  <div class="card" style="max-width:800px; margin:20px auto; padding:20px;">
+  <div class="card" style="max-width:600px; margin:20px auto; padding:20px;">
     <div class="card-title">🏆 High Scores</div>
-    <div style="display:flex; gap:20px; margin-top:20px;">
-      <div style="flex:1;">
-        <h3 style="color:#fff; margin-bottom:10px;">Original Mode</h3>
-        <div id="original-high-scores" style="display:flex; flex-direction:column; gap:10px;"></div>
-      </div>
-      <div style="flex:1;">
-        <h3 style="color:#fff; margin-bottom:10px;">Boss Mode</h3>
-        <div id="boss-high-scores" style="display:flex; flex-direction:column; gap:10px;"></div>
-      </div>
+    
+    <!-- Mode Selection -->
+    <div id="hs-mode-select" style="margin-top:20px;">
+      <h3 style="color:#fff; margin-bottom:10px;">เลือกโหมด</h3>
+      <button id="hs-original-btn" class="btn" style="margin-right:10px;">Original Mode</button>
+      <button id="hs-boss-btn" class="btn">Boss Mode</button>
     </div>
-    <button id="back-to-lobby-btn" class="btn" style="margin-top:20px;">กลับเมนู</button>
+    
+    <!-- Difficulty Selection for Original -->
+    <div id="hs-difficulty-select" style="display:none; margin-top:20px;">
+      <h3 style="color:#fff; margin-bottom:10px;">เลือกความยาก</h3>
+      <button class="btn hs-diff-btn" data-diff="Easy" style="margin-right:10px;">Easy</button>
+      <button class="btn hs-diff-btn" data-diff="Normal" style="margin-right:10px;">Normal</button>
+      <button class="btn hs-diff-btn" data-diff="Hard" style="margin-right:10px;">Hard</button>
+      <button class="btn hs-diff-btn" data-diff="Lunatic">Lunatic</button>
+      <br><button id="hs-back-to-mode" class="btn" style="margin-top:10px;">กลับ</button>
+    </div>
+    
+    <!-- High Score List -->
+    <div id="hs-list" style="display:none; margin-top:20px;">
+      <h3 id="hs-list-title" style="color:#fff; margin-bottom:10px;"></h3>
+      <div id="hs-scores" style="display:flex; flex-direction:column; gap:10px;"></div>
+      <button id="hs-back-to-diff" class="btn" style="margin-top:10px; display:none;">กลับ</button>
+      <button id="hs-back-to-mode-from-list" class="btn" style="margin-top:10px;">เลือกโหมดใหม่</button>
+    </div>
+    
+    <button id="back-to-lobby-btn" class="btn" style="margin-top:20px;">กลับเมนูหลัก</button>
   </div>
 </div>
 
