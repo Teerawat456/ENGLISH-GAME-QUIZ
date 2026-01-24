@@ -470,9 +470,9 @@ canvas#fog {
 <!-- ===============================
      HIGH SCORE PAGE
 =============================== -->
-<div id="high-score-page" style="display:none;">
-  <div class="card" style="max-width:600px; margin:20px auto; padding:20px;">
-    <div class="card-title">🏆 High Scores</div>
+<div id="high-score-page" style="display:none; position:fixed; right:0; top:0; width:350px; height:100%; z-index:15; background:#000; overflow-y:auto;">
+  <div class="card" style="margin:20px; padding:20px; width:calc(100% - 40px);">
+    <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">🏆 High Scores <button id="close-high-score-btn" class="btn" style="font-size:12px; padding:5px 10px;">✕</button></div>
     
     <!-- Mode Selection -->
     <div id="hs-mode-select" style="margin-top:20px;">
@@ -496,10 +496,8 @@ canvas#fog {
       <h3 id="hs-list-title" style="color:#fff; margin-bottom:10px;"></h3>
       <div id="hs-scores" style="display:flex; flex-direction:column; gap:10px;"></div>
       <button id="hs-back-to-diff" class="btn" style="margin-top:10px; display:none;">กลับ</button>
-      <button id="hs-back-to-mode-from-list" class="btn" style="margin-top:10px;">เลือกโหมดใหม่</button>
     </div>
     
-    <button id="back-to-lobby-btn" class="btn" style="margin-top:20px;">กลับเมนูหลัก</button>
   </div>
 </div>
 

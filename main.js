@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
   ui.hsBossBtn = document.getElementById('hs-boss-btn');
   ui.hsBackToMode = document.getElementById('hs-back-to-mode');
   ui.hsBackToDiff = document.getElementById('hs-back-to-diff');
-  ui.hsBackToModeFromList = document.getElementById('hs-back-to-mode-from-list');
+  ui.closeHighScoreBtn = document.getElementById('close-high-score-btn');
 
   if (ui.gameUI) ui.gameUI.style.display = "none";
 
@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (ui.hsBossBtn) ui.hsBossBtn.onclick = () => showHSList('Boss', 'Boss');
   if (ui.hsBackToMode) ui.hsBackToMode.onclick = showHSModeSelect;
   if (ui.hsBackToDiff) ui.hsBackToDiff.onclick = showHSDifficultySelect;
-  if (ui.hsBackToModeFromList) ui.hsBackToModeFromList.onclick = showHSModeSelect;
+  if (ui.closeHighScoreBtn) ui.closeHighScoreBtn.onclick = () => { if (ui.highScorePage) ui.highScorePage.style.display = 'none'; };
   document.querySelectorAll('.hs-diff-btn').forEach(btn => {
     btn.onclick = () => showHSList('Original', btn.dataset.diff);
   });
@@ -252,6 +252,7 @@ function showLobbyUI() {
   const dur = 240;
   try {
     if (ui.gameUI) { ui.gameUI.classList.add('fade'); ui.gameUI.classList.remove('fade-in'); ui.gameUI.classList.add('fade-out'); }
+    if (ui.highScorePage) ui.highScorePage.style.display = 'none';
     setTimeout(() => {
       try { if (ui.gameUI) ui.gameUI.style.display = 'none'; if (ui.lobby) { ui.lobby.style.display = ''; ui.lobby.classList.add('fade','fade-in'); ui.lobby.classList.remove('fade-out'); ui.lobby.scrollIntoView({behavior:'auto'}); } } catch (e) {}
     }, dur);
@@ -470,19 +471,21 @@ function updateHighScoreDisplay() {
    UI HELPERS
 ================================ */
 function showHighScorePage() {
-  if (ui.lobby) ui.lobby.style.display = 'none';
-  if (ui.gameUI) ui.gameUI.style.display = 'none';
+  console.log('showHighScorePage called');
+  // Don't hide lobby and gameUI for sidebar display
   if (ui.highScorePage) ui.highScorePage.style.display = 'block';
   showHSModeSelect();
 }
 
 function showHSModeSelect() {
+  console.log('showHSModeSelect called');
   if (ui.hsModeSelect) ui.hsModeSelect.style.display = 'block';
   if (ui.hsDifficultySelect) ui.hsDifficultySelect.style.display = 'none';
   if (ui.hsList) ui.hsList.style.display = 'none';
 }
 
 function showHSDifficultySelect() {
+  console.log('showHSDifficultySelect called');
   if (ui.hsModeSelect) ui.hsModeSelect.style.display = 'none';
   if (ui.hsDifficultySelect) ui.hsDifficultySelect.style.display = 'block';
   if (ui.hsList) ui.hsList.style.display = 'none';
