@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>English Battle</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<title>Pixel English Battle</title>
 
 <style>
 /* ===============================
@@ -13,10 +14,13 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background: #000;
-  color: #fff;
-  overflow-x: hidden; /* prevent horizontal overflow globally */
-  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #2c3e50;
+  color: #ecf0f1;
+  overflow-x: hidden;
+  font-family: 'Press Start 2P', monospace;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
 }
 
 /* Use border-box sizing to make widths predictable and avoid overflow */
@@ -36,50 +40,35 @@ canvas#fog {
   position: fixed;
   left: 50%;
   top: 50%;
-  width: 320px;
-  height: 320px;
-  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  border-radius: 0;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle,
-    rgba(120,0,0,0.9) 0%,
-    rgba(0,0,0,1) 55%);
-  box-shadow: 0 0 140px 70px rgba(255,0,0,0.75),
-              inset 0 0 90px rgba(0,0,0,1);
-  animation: eclipsePulse 3s infinite;
+  background: #e74c3c;
+  box-shadow: 0 0 0 4px #c0392b, 0 0 0 8px #e74c3c, 0 0 0 12px #c0392b;
+  animation: pixelPulse 1s infinite;
   z-index: 3;
 }
 
 .eclipse::before {
-  content: "";
-  position: absolute;
-  inset: -60px;
-  border-radius: 50%;
-  background: conic-gradient(
-    transparent,
-    rgba(255,0,0,0.6),
-    transparent,
-    rgba(255,0,0,0.8),
-    transparent
-  );
-  filter: blur(12px);
-  animation: spin 8s linear infinite;
+  display: none;
 }
 
 .vignette {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle,
-    rgba(0,0,0,0) 40%,
-    rgba(0,0,0,0.9) 100%);
+  background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%);
   z-index: 5;
   pointer-events: none;
 }
 
 @keyframes eclipsePulse {
-  0%,100% { box-shadow: 0 0 90px 45px rgba(255,0,0,0.6); }
-  50% { box-shadow: 0 0 180px 90px rgba(255,0,0,1); }
+  0%,100% { box-shadow: 0 0 0 4px #c0392b, 0 0 0 8px #e74c3c, 0 0 0 12px #c0392b; }
+  50% { box-shadow: 0 0 0 6px #c0392b, 0 0 0 10px #e74c3c, 0 0 0 14px #c0392b; }
 }
 @keyframes spin { from {transform:rotate(0);} to {transform:rotate(360deg);} }
+@keyframes rainbowRotate { from {filter: hue-rotate(0deg);} to {filter: hue-rotate(360deg);} }
+@keyframes pixelPulse { 0%,100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.1); } }
 
 /* ===============================
    UI LAYER
@@ -96,47 +85,58 @@ canvas#fog {
    CARDS
 =============================== */
 .card {
-  background: linear-gradient(180deg,
-    rgba(35,35,40,0.95),
-    rgba(15,15,18,0.95));
-  border-radius: 18px;
-  padding: 22px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: #34495e;
+  border-radius: 0;
+  padding: 16px;
+  box-shadow: 4px 4px 0 #2c3e50, 8px 8px 0 #1e272e;
+  border: 4px solid #ecf0f1;
 }
 
 .card-title {
-  font-size: 1.4em;
-  font-weight: 800;
-  color: #ffe082;
+  font-size: 1.2em;
+  font-weight: normal;
+  color: #f39c12;
+  text-shadow: 2px 2px 0 #e67e22;
 }
 
 /* ===============================
    BUTTONS
 =============================== */
 .btn {
-  padding: 12px 20px;
-  border-radius: 14px;
-  background: linear-gradient(180deg,#444,#111);
+  padding: 8px 16px;
+  border-radius: 0;
+  background: #3498db;
   color: #fff;
-  border: none;
+  border: 4px solid #2980b9;
   cursor: pointer;
-  font-weight: 700;
-  transition: transform .15s, box-shadow .15s, background .15s;
+  font-weight: normal;
+  transition: none;
+  position: relative;
+  box-shadow: 4px 4px 0 #2980b9;
+  font-size: 0.8em;
 }
 
 .btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.6);
+  background: #2980b9;
+  box-shadow: 2px 2px 0 #2980b9;
+  transform: translate(2px, 2px);
 }
 
 .btn:active {
-  transform: scale(0.96);
+  box-shadow: 0 0 0 #2980b9;
+  transform: translate(4px, 4px);
 }
 
 .btn-main {
-  background: linear-gradient(90deg,#ffe082,#ff5252);
-  color: #232526;
+  background: #e74c3c;
+  border: 4px solid #c0392b;
+  box-shadow: 4px 4px 0 #c0392b;
+}
+
+.btn-main:hover {
+  background: #c0392b;
+  box-shadow: 2px 2px 0 #c0392b;
+  transform: translate(2px, 2px);
 }
 
 /* ===============================
@@ -166,18 +166,78 @@ canvas#fog {
 
 .hp-bar {
   width: 100%;
-  height: 20px;
-  background: rgba(0,0,0,0.35);
-  border-radius: 12px;
+  height: 16px;
+  background: #34495e;
+  border-radius: 0;
   overflow: hidden;
   margin-top: 4px;
+  border: 2px solid #2c3e50;
+  box-shadow: inset 2px 2px 0 #1e272e;
+  position: relative;
 }
 
 .hp-bar .fill {
   height: 100%;
   width: 100%;
-  background: linear-gradient(90deg,#ff4d4d,#ffb3b3);
-  box-shadow: 0 0 12px rgba(255,0,0,0.8);
+  background: linear-gradient(90deg, #27ae60, #2ecc71, #27ae60);
+  background-size: 200% 100%;
+  animation: hpFlow 2s linear infinite;
+  position: relative;
+  transition: width 0.3s ease;
+}
+
+.hp-bar .fill::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: hpShine 3s ease-in-out infinite;
+}
+
+.hp-bar .fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 2px,
+    rgba(255,255,255,0.1) 2px,
+    rgba(255,255,255,0.1) 4px
+  );
+  animation: hpStripes 1s linear infinite;
+}
+
+@keyframes hpStripes {
+  0% { transform: translateX(-4px); }
+  100% { transform: translateX(4px); }
+}
+
+.hp-bar.low-hp .fill {
+  background: linear-gradient(90deg, #e74c3c, #c0392b, #e74c3c);
+  animation: hpFlow 1s linear infinite, hpPulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes hpFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes hpShine {
+  0%, 100% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+}
+
+@keyframes hpPulse {
+  0% { opacity: 1; }
+  100% { opacity: 0.7; }
 }
 
 .score-box {
@@ -193,11 +253,26 @@ canvas#fog {
 }
 
 #question-text {
-  background: rgba(0,0,0,0.45);
-  padding: 18px;
-  border-radius: 14px;
-  font-size: 1.15em;
+  background: #34495e;
+  padding: 12px;
+  border-radius: 0;
+  font-size: 0.9em;
   margin-bottom: 14px;
+  animation: questionFadeIn 0.5s ease-out;
+  color: #ecf0f1;
+  border: 2px solid #2c3e50;
+  box-shadow: 4px 4px 0 #2c3e50;
+}
+
+@keyframes questionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Accessibility & polished focus */
@@ -225,18 +300,74 @@ canvas#fog {
   gap: 14px;
 }
 
+@media (max-width: 600px) {
+  #choices {
+    grid-template-columns: 1fr;
+  }
+}
+
 .choice-btn {
-  background: linear-gradient(180deg,#2c2c2f,#141416);
-  border-radius: 14px;
-  padding: 14px;
+  background: #95a5a6;
+  border-radius: 0;
+  padding: 12px;
   text-align: center;
   cursor: pointer;
-  transition: transform .12s, box-shadow .12s;
+  transition: none;
+  position: relative;
+  color: #2c3e50;
+  border: 2px solid #7f8c8d;
+  box-shadow: 2px 2px 0 #7f8c8d;
+  font-size: 0.7em;
+}
+
+.choice-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.choice-btn:active::before {
+  width: 300px;
+  height: 300px;
 }
 
 .choice-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.6);
+  background: #7f8c8d;
+  box-shadow: 1px 1px 0 #7f8c8d;
+  transform: translate(1px, 1px);
+}
+
+.choice-btn.correct {
+  background: #27ae60;
+  border: 2px solid #229954;
+  box-shadow: 2px 2px 0 #229954;
+  animation: pixelCorrect 0.3s ease-out;
+}
+
+.choice-btn.incorrect {
+  background: #e74c3c;
+  border: 2px solid #c0392b;
+  box-shadow: 2px 2px 0 #c0392b;
+  animation: pixelShake 0.3s ease-out;
+}
+
+@keyframes pixelCorrect {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes pixelShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
 }
 
 /* ===============================
@@ -445,6 +576,7 @@ canvas#fog {
 <body>
 
 <canvas id="fog"></canvas>
+<canvas id="particles" style="position: fixed; inset: 0; z-index: 2; pointer-events: none;"></canvas>
 <div class="eclipse"></div>
 <div class="vignette"></div>
 <div class="scanlines"></div>
@@ -508,7 +640,7 @@ canvas#fog {
 
 <!-- Page BGM for Original Mode -->
 <audio id="bgm" preload="auto" loop style="display:none">
-  <source src="audio/Tactical.mp3" type="audio/mpeg">
+  <source src="audio/Moritz's Game.mp3" type="audio/mpeg">
 </audio>
 
 <!-- ===============================
@@ -553,7 +685,8 @@ canvas#fog {
       <div id="action-buttons" style="margin-top:12px; display:none;">
         <button class="btn" onclick="playerAction('attack')">โจมตี</button>
       </div>
-      <div id="log" style="margin-top:10px; min-height:28px; color:#b2ff59;"></div>
+      <div id="log"></div>
+
     </div>
   </div>
 </div>

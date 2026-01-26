@@ -294,6 +294,15 @@ function askQuestion() {
 function checkAnswer(choice, correct) {
   disableChoices();
 
+  // Add animation classes to buttons
+  document.querySelectorAll("#answerButtons button").forEach(btn => {
+    if (btn.textContent === correct) {
+      btn.classList.add('correct');
+    } else if (btn.textContent === choice && choice !== correct) {
+      btn.classList.add('incorrect');
+    }
+  });
+
   if (choice === correct) {
     enemyHP -= playerATK;
     score += scoreByDifficulty();
@@ -304,6 +313,11 @@ function checkAnswer(choice, correct) {
       ui.log.textContent = `✅ ถูกต้อง! โจมตี ${playerATK} • ฟื้นฟู HP +${heal}`;
     } catch (e) {
       ui.log.textContent = `✅ ถูกต้อง! โจมตี ${playerATK}`;
+    }    // Add particles on correct answer
+    const clickedBtn = document.querySelector(`#answerButtons button:nth-child(${Array.from(document.querySelectorAll('#answerButtons button')).findIndex(btn => btn.textContent === choice) + 1})`);
+    if (clickedBtn) {
+      const rect = clickedBtn.getBoundingClientRect();
+      addParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, 20);
     }
   } else {
     // Wrong answer handling
@@ -335,7 +349,13 @@ function checkAnswer(choice, correct) {
   if (playerHP <= 0 || enemyHP <= 0) {
     endGame();
   } else {
-    setTimeout(askQuestion, 900);
+    setTimeout(() => {
+      // Remove animation classes before next question
+      document.querySelectorAll("#answerButtons button").forEach(btn => {
+        btn.classList.remove('correct', 'incorrect');
+      });
+      askQuestion();
+    }, 900);
   }
 }
 
@@ -375,8 +395,34 @@ function updateHP() {
   try {
     const pFill = ui.playerHPBar.querySelector('.hp-bar-fill');
     const eFill = ui.enemyHPBar.querySelector('.hp-bar-fill');
-    if (pFill) pFill.style.width = (playerHP / ui.playerHPBar.dataset.max) * 100 + "%";
-    if (eFill) eFill.style.width = (enemyHP / ui.enemyHPBar.dataset.max) * 100 + "%";
+    const pBar = ui.playerHPBar.querySelector('.hp-bar');
+    const eBar = ui.enemyHPBar.querySelector('.hp-bar');
+    
+    if (pFill) {
+      const newWidth = (playerHP / ui.playerHPBar.dataset.max) * 100 + "%";
+      pFill.style.width = newWidth;
+    }
+    if (eFill) {
+      const newWidth = (enemyHP / ui.enemyHPBar.dataset.max) * 100 + "%";
+      eFill.style.width = newWidth;
+    }
+    
+    // Add low HP class when HP is below 25%
+    if (pBar) {
+      if (playerHP / ui.playerHPBar.dataset.max < 0.25) {
+        pBar.classList.add('low-hp');
+      } else {
+        pBar.classList.remove('low-hp');
+      }
+    }
+    if (eBar) {
+      if (enemyHP / ui.enemyHPBar.dataset.max < 0.25) {
+        eBar.classList.add('low-hp');
+      } else {
+        eBar.classList.remove('low-hp');
+      }
+    }
+    
     const pText = ui.playerHPBar.querySelector('.hp-bar-text');
     const eText = ui.enemyHPBar.querySelector('.hp-bar-text');
     if (pText) pText.textContent = `${playerHP} / ${ui.playerHPBar.dataset.max}`;
@@ -687,3 +733,66 @@ function resetGame() {
   // Do NOT autoplay lobby BGM — leave it paused per requirement
   try { const pageBgm = document.getElementById('bgm'); if (pageBgm) { try { pageBgm.pause(); pageBgm.currentTime = 0; } catch (e) {} } } catch (e) {}
 }
+
+/* ===============================
+   PARTICLE SYSTEM
+================================ */
+const particlesCanvas = document.getElementById('particles');
+const particlesCtx = particlesCanvas.getContext('2d');
+let particles = [];
+let animationId;
+
+function resizeCanvas() {
+  particlesCanvas.width = window.innerWidth;
+  particlesCanvas.height = window.innerHeight;
+}
+
+function createParticle(x, y) {
+  const colors = ['#e74c3c', '#f39c12', '#f1c40f', '#27ae60', '#3498db', '#9b59b6'];
+  return {
+    x: x,
+    y: y,
+    vx: (Math.random() - 0.5) * 4,
+    vy: (Math.random() - 0.5) * 4,
+    life: 60,
+    maxLife: 60,
+    size: 4,
+    color: colors[Math.floor(Math.random() * colors.length)]
+  };
+}
+
+function updateParticles() {
+  particles = particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+    p.size *= 0.98;
+  }).filter(p => p.life > 0);
+}
+
+function drawParticles() {
+  particlesCtx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height);
+  particles.forEach(p => {
+    particlesCtx.globalAlpha = p.life / p.maxLife;
+    particlesCtx.fillStyle = p.color;
+    particlesCtx.fillRect(p.x, p.y, p.size, p.size);
+  });
+  particlesCtx.globalAlpha = 1;
+}
+
+function animateParticles() {
+  updateParticles();
+  drawParticles();
+  animationId = requestAnimationFrame(animateParticles);
+}
+
+function addParticles(x, y, count = 10) {
+  for (let i = 0; i < count; i++) {
+    particles.push(createParticle(x, y));
+  }
+}
+
+// Initialize particles
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+animateParticles();
