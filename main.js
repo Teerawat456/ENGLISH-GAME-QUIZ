@@ -8,6 +8,9 @@ let score = 0;
 let highScores = [];
 let questionPool = [];
 let currentDifficulty = "";
+// Streak tracking
+let streak = 0;
+let maxStreak = 0;
 
 // Boss BGM state
 let bossBGM = [];
@@ -51,6 +54,9 @@ document.addEventListener("DOMContentLoaded", () => {
   ui.hsBackToMode = document.getElementById('hs-back-to-mode');
   ui.hsBackToDiff = document.getElementById('hs-back-to-diff');
   ui.closeHighScoreBtn = document.getElementById('close-high-score-btn');
+  ui.streakText = document.getElementById('streak');
+  ui.menuStartBtn = document.getElementById('menu-start-btn');
+  ui.menuScoreBtn = document.getElementById('menu-score-btn');
 
   if (ui.gameUI) ui.gameUI.style.display = "none";
 
@@ -110,6 +116,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // High score page buttons
   if (ui.viewHighScoresBtn) ui.viewHighScoresBtn.onclick = showHighScorePage;
   if (ui.backToLobbyBtn) ui.backToLobbyBtn.onclick = showLobbyUI;
+  if (ui.menuStartBtn) ui.menuStartBtn.onclick = () => {
+    try { document.getElementById('main-menu').style.display = 'none'; } catch(e) {}
+    try { if (ui && ui.lobby) ui.lobby.style.display = ''; } catch(e) {}
+  };
+  if (ui.menuScoreBtn) ui.menuScoreBtn.onclick = () => { showHighScorePage(); };
   if (ui.hsOriginalBtn) ui.hsOriginalBtn.onclick = () => showHSDifficultySelect();
   if (ui.hsBossBtn) ui.hsBossBtn.onclick = () => showHSList('Boss', 'Boss');
   if (ui.hsBackToMode) ui.hsBackToMode.onclick = showHSModeSelect;
@@ -231,6 +242,8 @@ function startGame(pool) {
   updateHP();
   updateScore();
   ui.log.textContent = "";
+  // reset streak when a new game starts
+  streak = 0; maxStreak = 0; updateStreakDisplay();
 
   askQuestion();
 }
@@ -305,14 +318,19 @@ function checkAnswer(choice, correct) {
 
   if (choice === correct) {
     enemyHP -= playerATK;
-    score += scoreByDifficulty();
+    // increase streak and compute bonus
+    streak = (streak || 0) + 1;
+    if (streak > maxStreak) maxStreak = streak;
+    const base = scoreByDifficulty();
+    const bonus = streakBonus();
+    score += base + bonus;
     // Restore 15% of max HP on correct answer
     try {
       const heal = Math.round((playerMaxHP || 0) * 0.15);
       playerHP = Math.min((playerHP || 0) + heal, playerMaxHP || playerHP || 0);
-      ui.log.textContent = `✅ ถูกต้อง! โจมตี ${playerATK} • ฟื้นฟู HP +${heal}`;
+      ui.log.textContent = `✅ ถูกต้อง! โจมตี ${playerATK} • ฟื้นฟู HP +${heal} • Streak: ${streak} (+${bonus} bonus)`;
     } catch (e) {
-      ui.log.textContent = `✅ ถูกต้อง! โจมตี ${playerATK}`;
+      ui.log.textContent = `✅ ถูกต้อง! โจมตี ${playerATK} • Streak: ${streak} (+${bonus} bonus)`;
     }    // Add particles on correct answer
     const clickedBtn = document.querySelector(`#answerButtons button:nth-child(${Array.from(document.querySelectorAll('#answerButtons button')).findIndex(btn => btn.textContent === choice) + 1})`);
     if (clickedBtn) {
@@ -320,6 +338,12 @@ function checkAnswer(choice, correct) {
       addParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, 20);
     }
   } else {
+    // reset streak on wrong answer
+    if (streak > 0) {
+      ui.log.textContent = (ui.log.textContent ? ui.log.textContent + ' • ' : '') + `Streak broken (max ${maxStreak})`;
+    }
+    streak = 0;
+
     // Wrong answer handling
     if (currentDifficulty === 'Boss') {
       // If boss is already enraged -> instant death
@@ -460,6 +484,29 @@ function updateHP() {
 
 function updateScore() {
   ui.scoreText.textContent = score;
+  updateStreakDisplay();
+}
+
+function updateStreakDisplay() {
+  try {
+    if (ui && ui.streakText) ui.streakText.textContent = `Streak: ${streak}`;
+  } catch (e) {}
+}
+
+// Compute bonus based on current streak and difficulty.
+// Bonus scales every 3 correct answers to avoid runaway scores.
+function streakBonus() {
+  try {
+    const perMode = {
+      Easy: 1,
+      Normal: 2,
+      Hard: 3,
+      Lunatic: 5,
+      Boss: 15
+    }[currentDifficulty] || 2;
+    const tiers = Math.floor((streak || 0) / 3);
+    return tiers * perMode;
+  } catch (e) { return 0; }
 }
 
 function updateHighScoreDisplay() {
@@ -650,10 +697,7 @@ function shuffle(arr) {
 function ensureBossBGM() {
   if (bossBGM && bossBGM.length) return;
   const files = [
-    'audio/Able Phase 1.mp3',
-    'audio/Able Phase 2.mp3',
-    'audio/Able Phase 3.mp3',
-    'audio/Able Last Phase.mp3'
+    'audio/14. Strawberry Crisis!!.mp3'
   ];
   bossBGM = files.map(src => {
     try {
